@@ -1,0 +1,237 @@
+<?php
+//MIGRADO A mysqli el 20/12/2018 por LERN
+
+global $pagActual, $meta_Descripcion, $meta_Keywords, $title, $scripts, $styles;
+
+$pagActual="07";
+$meta_Descripcion = "Esta el cronograma de capacitaciones que se realizan por internet en Ziur software";
+$meta_Keywords = "capacitación software contable, capacitación ziur, software contable";
+$title = "Capacitaciones Virtuales - Ziur Software";
+?>
+<?php
+include("_parteEncab_New2019.php");
+?>
+
+<?php
+include("Conexion.php");
+$link=Conectarse();
+
+$opcion = -1; 
+$opcion = isset($_POST["IdTipoCurso"]) ? $_POST["IdTipoCurso"] : "0";
+
+//Llenar el combo de modalidades de tipos cursos
+//--
+$strSql = "select IdTipo, NomTipo from Cursos_Tipos where IdTipo IN(0,2)";
+$result= $link->query($strSql);
+$comboTiposCursos = "<select name='IdTipoCurso' onchange='javascript:this.form.submit();'><option value=''>--</option>";
+
+while($items=$result->fetch(PDO::FETCH_ASSOC))
+{
+$sel ="";
+if ($items["IdTipo"]==$opcion)
+$sel="selected";
+
+$comboTiposCursos = $comboTiposCursos . "<option " . $sel . " value=\"".htmlspecialchars($items['IdTipo'])."\">".$items['NomTipo']."    </option>";
+}
+
+$comboTiposCursos = $comboTiposCursos . "</select>";
+//--
+
+$numdia = date("N");
+
+if ($numdia > 0)
+$numdia = date("d") - ($numdia-1);
+
+$fechaini = date("Y-m-d",mktime(0,0,0,date("n"),$numdia,date("Y")));
+$numdia += 6;
+$fechafin = date("Y-m-d",mktime(23,59,59,date("n"),$numdia,date("Y")));
+
+$dias = array("Domingo","Lunes","Martes","Miercoles","Jueves","Viernes","S&aacute;bado");
+$meses = array("","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre");
+
+$where ="";
+$orderby = " order by Cur_Prog.Fecha asc ";
+
+
+switch ($opcion)
+{
+case -1:
+$where = "";
+break;
+case 0:
+$where = " and Cur_Prog.Tipo = 0 ";
+$orderby = " order by Cur_Prog.Fecha asc ";
+break;
+case 2:
+$where = " and Cur_Prog.Tipo = 2 ";
+$orderby = " order by Cur_Prog.Fecha asc ";
+break;
+}
+
+
+$strSql = "SELECT Cur.CodCurso, Cur.NomCurso, Cur.DescripCurso, Cur.Duracion, Cur_Prog.Fecha, Cur_Prog.HoraIni, Cur_Prog.HoraFin, Cur_Prog.UrlVideo, Cur_Prog.DescripCurso as DescripCurso2, Cur_Prog.Tipo, Cur_Prog.UrlConferencia " .
+"FROM Cursos_Disponibles AS Cur INNER JOIN Cursos_Programacion AS Cur_Prog ON Cur.IdCurso = Cur_Prog.IdCurso " .
+"WHERE Cur_Prog.EsActivo = 1 and Cur_Prog.Fecha >= CURDATE() " . $where . $orderby;
+$result = $link->query($strSql);
+
+
+
+?>
+
+<!-- offer section start -->
+<section class="offer-area bg-color-7 offer-two section-padding">
+<div class="container">
+<div class="row text-center">
+<div class=" col-xs-12 col-sm-10 col-md-8 col-text-center"> 
+<div class="section-title">
+<h2>Capacitaciones</h2>
+<div class="title-line">
+</div>
+</div>
+</div>
+</div>
+<div class="row">
+<div class="col-xs-9 col-sm-10 col-sm-10 col-text-center">     <!-- 21 jun 2022  col-xs-9 col-sm-10 col-sm-10 col-text-center -->
+<div class="accordion-one">
+<ul id="accordion" class="panel-group clearfix">
+<?php 
+$i=0;
+while($row =$result->fetch(PDO::FETCH_ASSOC))
+{
+$i++;
+
+ $strClassResp ="panel-collapse collapse in"; 
+
+
+$time = strtotime($row["Fecha"]);
+switch ($row["Tipo"])
+{
+case "0":
+$strTipo = "VIRTUAL";
+break;
+case "1":
+$strTipo = "INTERNO";
+break;
+case "2":
+$strTipo = "PRESENCIAL";
+break;
+}
+
+?>
+<tr>
+<td colspan="7">
+<li class="panel">
+<div class="capacitacioncontenedor">
+<div class="fecha">
+<div data-toggle="collapse" data-parent="#accordion" data-target="#collapse<?php echo $i ?>" data-bs-target="#collapseTwo"> <!--Si quito el <?php //echo $i ?> me mostrara todo en + y quedara disfuncional el incrementador o decrementador  data-bs-target="#collapseOne" -->
+<div class="faq-heading">  
+  
+<h3><?php echo $row["NomCurso"] ?></h3>
+</div>
+</div>
+<div class="<?php echo $strClassResp ?>" id="collapse<?php echo $i ?>">   
+<div class="faq-p"> 
+<div class="row">
+<div class="all-service clearfix">
+<div class="col-xs-7 col-sm-6 col-md-2">    
+<div class="single-service margin-bottom">
+ <div class="service-icon-one">   
+</div>
+<div class="service-text">
+<span style="font-size: 24px; font-weight: bold;">
+<? echo $dias[date("N",$time)] ?>
+<br />
+</span>
+<span style="font-size: 14px;">
+<? echo date("d", strtotime($row["Fecha"])) . " " . $meses[date("n",$time)] . " " . date("Y", strtotime($row["Fecha"]))?>
+</span> 
+<br />
+Horario
+<br />
+<span style="font-size: 14px; ">
+<?php echo date("h:i", strtotime($row["HoraIni"])) . " - " . date("h:i", strtotime($row["HoraFin"])) ?>
+</span>
+<p></p>
+</div>
+</div>     
+</div>     
+
+
+<div class="col-xs-12 col-sm-6 col-md-6">
+<div class="single-service margin-bottom">
+<div class="service-text">
+<span style="font-size: 24px; font-weight: bold;">
+
+<?php echo $row["NomCurso"] ?> 
+<br />
+</span>
+
+<span style="font-size: 14px;">
+<?php echo $row["DescripCurso"] ?> 
+</span>
+<p></p>
+</div>
+</div>
+</div>
+<!------------------ -->
+<div class="col-xs-10 col-sm-6 col-md-4"> 
+<div class="single-service margin-bottom">
+<div class="service-text">
+<span style="font-size: 20px; font-weight: bold;">
+Código
+<br />
+</span>
+<span style="font-size: 14px;">
+<? echo $row["CodCurso"] ?> 
+</span>
+<br />
+<span style="font-size: 20px; font-weight: bold;">
+Tipo:
+<br />
+</span>
+<span class="pandin-1" >
+<?php echo $strTipo ?>
+</span>
+<p></p>
+<span style="font-size: 20px; font-weight: bold;">
+Duración:
+<br />
+</span>
+<span class="pandin-1" >
+<?php echo $row["Duracion"] ?> Horas
+</span>
+<br />
+</div>
+
+<br />
+<div class="contenidocapacitacion">
+
+ <a href="<?php echo $row["UrlConferencia"] ?>" target="_blank" style="background-color:DodgerBlue;">
+    <button style="background-color:#2E9AFE;">Realizar Registro</button>
+    </a> 
+
+ </div>
+</div>
+</div>
+</li>
+<?php
+}
+?>
+</ul>
+</div>
+</div>
+</table>
+</div>
+
+</section>
+
+<?php
+include("_parteFin_New2019.php");
+?>
+<?php
+//Liberar recursos
+//--
+$result->closeCursor();
+$link=null;
+//--
+?>
